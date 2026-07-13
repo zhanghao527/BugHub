@@ -14,10 +14,13 @@
  export type CatalogL2 = { id: string; name: string; bugs: CatalogBug[] };
  export type CatalogL1 = { id: string; name: string; count: number; directBugs: CatalogBug[]; children: CatalogL2[] };
  export type BugDetail = { slug: string; title: string; severity: string; stage: string; date: string; tags: string[]; body: string; categoryPath: string[] };
- type Fm = { title?: string; severity?: string; stage?: string; date?: unknown; tags?: unknown };
+ type Fm = { severity?: string; stage?: string; date?: unknown; tags?: unknown };
  type Row = { l1: string; l2: string | null; slug: string; title: string; severity: string; stage: string };
  
  // ===== 工具 =====
+ function norm(s: string): string {
+  return s.normalize("NFC");
+ }
  function stripOrderPrefix(name: string): string {
   return name.replace(/^\d+\s*[-_.]\s*/, "").trim();
  }
@@ -29,13 +32,16 @@
  function toTags(v: unknown): string[] {
   return Array.isArray(v) ? v.map((t) => String(t)) : [];
  }
+ function baseName(p: string): string {
+  const seg = p.split("/").pop() || "";
+  return seg.replace(/\.md$/, "");
+ }
  function classify(rel: string): { l1: string; l2: string | null; slug: string } | null {
   const parts = rel.split("/").filter(Boolean);
   if (parts.length < 2) return null;
   const file = parts[parts.length - 1];
   if (!file.endsWith(".md")) return null;
-  const slug = file.replace(/\.md$/, "");
-  return { l1: parts[0], l2: parts.length >= 3 ? parts[1] : null, slug };
+  return { l1: parts[0], l2: parts.length >= 3 ? parts[1] : null, slug: file.replace(/\.md$/, "") };
  }
  function buildCatalog(rows: Row[]): CatalogL1[] {
   const sorted = [...rows].sort((a, b) => {
@@ -121,7 +127,7 @@
   if (!cls) return;
   const raw = await ghRaw(commitSha, it.path);
   const fm = matter(raw).data as Fm;
-  rows.push({ l1: cls.l1, l2: cls.l2, slug: cls.slug, title: fm.title || cls.slug, severity: fm.severity || "", stage: fm.stage || "" });
+  rows.push({ l1: cls.l1, l2: cls.l2, slug: cls.slug, title: cls.slug, severity: fm.severity || "", stage: fm.stage || "" });
   })
   );
   return buildCatalog(rows);
@@ -133,10 +139,9 @@
   try {
   const commitSha = await ghCommitSha();
   const tree = await ghTree(commitSha);
-  const item = mdItemsOf(tree).find((t) => t.path.endsWith("/" + slug + ".md"));
+  const item = mdItemsOf(tree).find((t) => norm(baseName(t.path)) === slug);
   if (!item) return null;
-  const rel = item.path.slice(CONTENT_PATH.length + 1);
-  const cls = classify(rel);
+  const cls = classify(item.path.slice(CONTENT_PATH.length + 1));
   if (!cls) return null;
   const raw = await ghRaw(commitSha, item.path);
   const parsed = matter(raw);
@@ -145,7 +150,7 @@
   const l2Name = cls.l2 ? stripOrderPrefix(cls.l2) : null;
   return {
   slug: cls.slug,
-  title: fm.title || cls.slug,
+  title: cls.slug,
   severity: fm.severity || "",
   stage: fm.stage || "",
   date: normalizeDate(fm.date),
@@ -190,7 +195,7 @@
   const cls = classify(rel);
   if (!cls) continue;
   const fm = matter(fs.readFileSync(f, "utf8")).data as Fm;
-  rows.push({ l1: cls.l1, l2: cls.l2, slug: cls.slug, title: fm.title || cls.slug, severity: fm.severity || "", stage: fm.stage || "" });
+  rows.push({ l1: cls.l1, l2: cls.l2, slug: cls.slug, title: cls.slug, severity: fm.severity || "", stage: fm.stage || "" });
   }
   return buildCatalog(rows);
  }
@@ -199,12 +204,12 @@
   for (const f of files) {
   const rel = path.relative(root, f).split(path.sep).join("/");
   const cls = classify(rel);
-  if (!cls || cls.slug !== slug) continue;
+  if (!cls || norm(cls.slug) !== slug) continue;
   const parsed = matter(fs.readFileSync(f, "utf8"));
   const fm = parsed.data as Fm;
   const l1Name = stripOrderPrefix(cls.l1);
   const l2Name = cls.l2 ? stripOrderPrefix(cls.l2) : null;
-  return { slug: cls.slug, title: fm.title || cls.slug, severity: fm.severity || "", stage: fm.stage || "", date: normalizeDate(fm.date), tags: toTags(fm.tags), body: parsed.content.trim(), categoryPath: l2Name ? [l1Name, l2Name] : [l1Name] };
+  return { slug: cls.slug, title: cls.slug, severity: fm.severity || "", stage: fm.stage || "", date: normalizeDate(fm.date), tags: toTags(fm.tags), body: parsed.content.trim(), categoryPath: l2Name ? [l1Name, l2Name] : [l1Name] };
   }
   return null;
  }
@@ -214,7 +219,10 @@
   const gh = await githubCatalog();
   return gh && gh.length > 0 ? gh : localCatalog();
  }
- export async function getBugBySlug(slug: string): Promise<BugDetail | null> {
+ export async function getBugBySlug(input: string): Promise<BugDetail | null> {
+  let slug = input;
+  try { slug = decodeURIComponent(input); } catch {}
+  slug = norm(slug);
   const gh = await githubBugBySlug(slug);
   if (gh) return gh;
   return localBugBySlug(slug);
