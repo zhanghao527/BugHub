@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+ --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+ --font-mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+ background-color: #f5f6f8;
+ color: #1f2328;
+ font-family: var(--font-sans);
+ -webkit-font-smoothing: antialiased;
+}
+
+.font-mono { font-family: var(--font-mono); }
+
+.prose-bug { color: #374151; line-height: 1.8; font-size: 15px; word-break: break-word; }
+.prose-bug h1, .prose-bug h2, .prose-bug h3 { color: #111827; font-weight: 600; margin: 1.1em 0 0.5em; }
+.prose-bug p { margin: 0.6em 0; }
+.prose-bug ul, .prose-bug ol { margin: 0.6em 0; padding-left: 1.4em; }
+.prose-bug ul { list-style: disc; }
+.prose-bug ol { list-style: decimal; }
+.prose-bug li { margin: 0.25em 0; }
+.prose-bug code { background: #f3f4f6; color: #b91c1c; padding: 0.1em 0.4em; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+.prose-bug pre { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 1em; overflow-x: auto; }
+.prose-bug pre code { background: transparent; color: inherit; padding: 0; }
+.prose-bug a { color: #2563eb; text-decoration: underline; }
+.prose-bug blockquote { border-left: 3px solid #d1d5db; padding-left: 1em; color: #6b7280; margin: 0.7em 0; }
+.prose-bug table { border-collapse: collapse; margin: 0.7em 0; }
+.prose-bug th, .prose-bug td { border: 1px solid #e5e7eb; padding: 0.4em 0.7em; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ===== Markdown 文档主题 ===== */
+.doc { color: #374151; font-size: 16px; line-height: 1.8; word-break: break-word; }
+.doc h1 { font-size: 1.7em; font-weight: 700; color: #111827; margin: 0 0 .5em; line-height: 1.25; }
+.doc h2 { font-size: 1.25em; font-weight: 700; color: #111827; margin: 1.6em 0 .6em; }
+.doc h3 { font-size: 1.05em; font-weight: 600; color: #111827; margin: 1.2em 0 .4em; }
+.doc p { margin: .8em 0; }
+.doc ul { list-style: disc; margin: .7em 0; padding-left: 1.5em; }
+.doc ol { list-style: decimal; margin: .7em 0; padding-left: 1.5em; }
+.doc li { margin: .3em 0; }
+.doc a { color: #2563eb; text-decoration: underline; }
+.doc strong { color: #111827; font-weight: 700; }
+.doc code { background: #f3f4f6; color: #b91c1c; padding: .12em .4em; border-radius: 4px; font-family: var(--font-mono); font-size: .88em; }
+.doc pre { background: #f6f8fa; color: #1f2328; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1em; overflow-x: auto; margin: 1em 0; }
+.doc pre code { background: transparent; color: inherit; padding: 0; }
+.doc blockquote { border-left: 3px solid #d1d5db; padding-left: 1em; color: #6b7280; margin: 1em 0; }
+.doc hr { border: 0; border-top: 1px solid #e5e7eb; margin: 1.5em 0; }
+.doc table { border-collapse: collapse; margin: 1em 0; width: 100%; }
+.doc th, .doc td { border: 1px solid #e5e7eb; padding: .5em .8em; text-align: left; }
+.doc th { background: #f9fafb; }
+
+/* t1 GitHub 简洁：标题带下划线 */
+.doc.t1 h1, .doc.t1 h2 { border-bottom: 1px solid #e5e7eb; padding-bottom: .3em; }
+
+/* t2 衬线书卷 */
+.doc.t2 { font-family: "Songti SC", "Noto Serif SC", "Source Han Serif SC", Georgia, serif; font-size: 17px; line-height: 1.95; color: #33302c; }
+.doc.t2 h1, .doc.t2 h2, .doc.t2 h3, .doc.t2 strong { color: #1c1a17; }
+
+/* t3 Notion 舒适 */
+.doc.t3 { color: #37352f; line-height: 1.75; }
+.doc.t3 h2 { font-size: 1.2em; margin-top: 1.9em; }
+.doc.t3 code { background: rgba(135,131,120,.16); color: #c0392b; }
+
+/* t4 技术文档：标题左色条 + 深色代码块 */
+.doc.t4 h2 { border-left: 4px solid #2563eb; padding-left: .55em; }
+.doc.t4 pre { background: #0f172a; color: #e2e8f0; border-color: #0f172a; }
+.doc.t4 pre code { color: #e2e8f0; }
+
+/* t5 大字极简 */
+.doc.t5 { font-size: 18px; line-height: 1.9; }
+.doc.t5 h2 { font-size: 1.15em; font-weight: 600; color: #6b7280; margin-top: 2em; }
+
+/* t6 深色代码 + 蓝色标题 */
+.doc.t6 h2 { color: #2563eb; }
+.doc.t6 pre { background: #1e293b; color: #e2e8f0; border-color: #1e293b; }
+.doc.t6 pre code { color: #e2e8f0; }
+.doc.t6 code { background: #eef2ff; color: #4f46e5; }
+
+/* t7 杂志大标题 */
+.doc.t7 h1 { font-size: 2.2em; }
+.doc.t7 h2 { font-size: 1.6em; font-weight: 800; margin-top: 1.9em; letter-spacing: -.01em; }
+
+/* t8 紧凑密集 */
+.doc.t8 { font-size: 14px; line-height: 1.65; }
+.doc.t8 h2 { font-size: 1.1em; margin: 1.1em 0 .4em; }
+.doc.t8 p, .doc.t8 li { margin: .35em 0; }
+.doc.t8 pre { padding: .7em; }

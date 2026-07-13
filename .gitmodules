@@ -1,0 +1,3 @@
+[submodule "bughub-content"]
+	path = bughub-content
+	url = git@github.com:zhanghao527/bughub-content.git
