@@ -1,29 +1,27 @@
- import { getCatalog } from "@/lib/data";
- import Catalog from "@/components/Catalog";
- 
- export const revalidate = 300;
- 
- async function load() {
-  try {
-  return await getCatalog();
-  } catch {
-  return [];
-  }
- }
- 
- export default async function HomePage() {
-  const catalog = await load();
-  const total = catalog.reduce((s, c) => s + c.count, 0);
-  return (
-  <div className="mx-auto max-w-3xl px-5 py-8">
-  <h1 className="text-2xl font-bold text-gray-900">BUG 库</h1>
-  <p className="mt-1.5 text-sm text-gray-600">
-  记录真实的线上缺陷：现象、根因、复现，以及当初到底该怎么测。
-  {total > 0 ? `已收录 ${total} 个，覆盖 ${catalog.length} 个方向。` : ""}
-  </p>
-  <p className="mb-8 mt-1 text-xs text-gray-500">点击分类展开，点击题目查看详情。</p>
-  <Catalog data={catalog} />
-  </div>
-  );
- }
- 
+import AiConnect from "@/components/AiConnect";
+import Catalog from "@/components/Catalog";
+import { getCatalog } from "@/lib/data";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function HomePage() {
+ const catalog = await getCatalog();
+ const total = catalog.reduce((sum, category) => sum + category.count, 0);
+ return (
+ <div className="page-shell home-page">
+ <section className="home-intro" aria-labelledby="home-title">
+ <h1 id="home-title">从大量 Bug 中，练出风险嗅觉。</h1>
+ <div className="home-facts" aria-label="内容概览">
+ <span><strong>{total}</strong> 个 Bug</span>
+ <span><strong>{catalog.length}</strong> 类问题</span>
+ <span>持续收录与整理</span>
+ </div>
+ </section>
+
+ <Catalog data={catalog} />
+
+ <AiConnect />
+ </div>
+ );
+}

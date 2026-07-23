@@ -1,26 +1,25 @@
- import { revalidatePath } from "next/cache";
- import { NextRequest, NextResponse } from "next/server";
- 
- // GitHub webhook 或手动触发：即时刷新站点内容缓存。
- // 若设置了 REVALIDATE_SECRET，则请求需带 ?secret=xxx。
- export const dynamic = "force-dynamic";
- 
- async function handle(req: NextRequest) {
+import { timingSafeEqual } from "node:crypto";
+import { revalidatePath } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+function safeEqual(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+export async function POST(req: NextRequest) {
   const secret = process.env.REVALIDATE_SECRET;
-  if (secret) {
-  const got = req.nextUrl.searchParams.get("secret");
-  if (got !== secret) {
-  return NextResponse.json({ ok: false, error: "invalid secret" }, { status: 401 });
+  if (!secret) {
+    return NextResponse.json({ ok: false, error: "revalidation secret is not configured" }, { status: 503 });
   }
+  const authorization = req.headers.get("authorization") || "";
+  if (!safeEqual(authorization, `Bearer ${secret}`)) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   revalidatePath("/", "layout");
-  return NextResponse.json({ ok: true, revalidated: true, now: Date.now() });
- }
- 
- export async function POST(req: NextRequest) {
-  return handle(req);
- }
- export async function GET(req: NextRequest) {
-  return handle(req);
- }
- 
+  return NextResponse.json({ ok: true, revalidated: true, now: new Date().toISOString() });
+}

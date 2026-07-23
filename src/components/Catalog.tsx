@@ -1,73 +1,72 @@
-"use client";
-import { useState } from "react";
 import Link from "next/link";
-import type { CatalogL1, CatalogL2, CatalogBug } from "@/lib/data";
-
-const LIMIT = 12;
+import type { CatalogBug, CatalogL1, CatalogL2 } from "@/lib/data";
 
 export default function Catalog({ data }: { data: CatalogL1[] }) {
- if (!data || data.length === 0) {
+ if (!data.length) {
  return (
- <div className="rounded-lg border border-dashed border-gray-300 bg-white p-12 text-center text-sm text-gray-400">题库还没有内容。</div>
+ <div className="empty-state">
+ <strong>内容暂时不可用</strong>
+ <span>本地数据库暂无可展示的 Bug，请先完成数据初始化。</span>
+ </div>
  );
  }
- return <div className="space-y-6">{data.map((c1) => (<Sec key={c1.id} c1={c1} />))}</div>;
-}
 
-function Sec({ c1 }: { c1: CatalogL1 }) {
- const [o, setO] = useState(false);
  return (
- <div>
- <button onClick={() => setO((v) => !v)} className="flex w-full items-center gap-2 text-left">
- <Chev o={o} />
- <span className="text-[15px] font-bold text-gray-900">{c1.name}</span>
- <span className="ml-1 font-mono text-xs text-gray-500">{c1.count}</span>
- </button>
- {o ? (<div className="ml-[7px] mt-2 space-y-3 border-l border-gray-300 pl-5">{c1.directBugs.length > 0 ? <Rows bugs={c1.directBugs} /> : null}{c1.children.map((c2) => (<Sub key={c2.id} c2={c2} />))}</div>) : null}
+ <section id="catalog" className="catalog-section" aria-label="Bug 分类目录">
+ <div className="catalog-list">
+ {data.map((category) => (
+ <Category key={category.id} category={category} />
+ ))}
  </div>
+ </section>
  );
 }
 
-function Sub({ c2 }: { c2: CatalogL2 }) {
- const [o, setO] = useState(false);
+function Category({ category }: { category: CatalogL1 }) {
  return (
- <div>
- <button onClick={() => setO((v) => !v)} className="flex w-full items-center gap-1.5 text-left">
- <Chev o={o} small />
- <span className="text-sm font-semibold text-gray-800">{c2.name}</span>
- <span className="ml-1 font-mono text-xs text-gray-500">{c2.bugs.length}</span>
- </button>
- {o ? (<div className="mt-1 pl-5"><Rows bugs={c2.bugs} /></div>) : null}
+ <details className="catalog-category">
+ <summary>
+ <span className="summary-chevron" aria-hidden="true">›</span>
+ <span className="category-line">
+ <strong>{category.name}</strong>
+ <span>{category.count}</span>
+ </span>
+ </summary>
+ <div className="category-body">
+ {category.directBugs.length ? <BugRows bugs={category.directBugs} /> : null}
+ {category.children.map((subcategory) => (
+ <Subcategory key={subcategory.id} subcategory={subcategory} />
+ ))}
  </div>
+ </details>
  );
 }
 
-function Rows({ bugs }: { bugs: CatalogBug[] }) {
- const [showAll, setShowAll] = useState(false);
- const numWidth = `${String(bugs.length).length + 1}ch`;
- const visible = showAll ? bugs : bugs.slice(0, LIMIT);
- const rest = bugs.length - LIMIT;
+function Subcategory({ subcategory }: { subcategory: CatalogL2 }) {
  return (
- <ul className="space-y-0.5">
- {visible.map((b, i) => (
- <li key={b.slug}>
- <Link href={`/bug/${b.slug}`} className="group flex items-center gap-3 py-1">
- <span className="shrink-0 text-right font-mono text-xs tabular-nums text-gray-400" style={{ width: numWidth }}>{i + 1}.</span>
- <span className="flex-1 truncate text-[15px] text-gray-800 group-hover:text-brand">{b.title}</span>
+ <details className="catalog-subcategory">
+ <summary>
+ <span className="summary-chevron" aria-hidden="true">›</span>
+ <strong>{subcategory.name}</strong>
+ <span className="subcategory-count">{subcategory.bugs.length}</span>
+ </summary>
+ <BugRows bugs={subcategory.bugs} />
+ </details>
+ );
+}
+
+function BugRows({ bugs }: { bugs: CatalogBug[] }) {
+ return (
+ <ol className="bug-rows">
+ {bugs.map((bug, index) => (
+ <li key={bug.id}>
+ <Link href={`/bug/${bug.id}`} target="_blank" rel="noreferrer">
+ <span className="bug-number">{index + 1}.</span>
+ <span className="bug-title">{bug.title}</span>
+ <span className="bug-arrow" aria-hidden="true">→</span>
  </Link>
  </li>
  ))}
- {rest > 0 ? (
- <li>
- <button onClick={() => setShowAll((v) => !v)} className="mt-1 py-1 text-xs font-medium text-brand hover:underline" style={{ paddingLeft: `calc(${numWidth} + 0.75rem)` }}>
- {showAll ? "收起" : `展开剩余 ${rest} 个 →`}
- </button>
- </li>
- ) : null}
- </ul>
+ </ol>
  );
-}
-
-function Chev({ o, small }: { o: boolean; small?: boolean }) {
- return (<svg className={(small ? "h-3 w-3 " : "h-3.5 w-3.5 ") + "shrink-0 text-gray-500 transition-transform " + (o ? "rotate-90" : "")} viewBox="0 0 20 20" fill="currentColor"><path d="M7 4l7 6-7 6z" /></svg>);
 }

@@ -37,3 +37,8 @@ next-env.d.ts
 
 # local env
 .env
+
+# local SQLite content
+/.data/*.sqlite
+/.data/*.sqlite-*
+/.data/exports/

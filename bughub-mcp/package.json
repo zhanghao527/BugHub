@@ -1,0 +1,17 @@
+{
+  "name": "bughub-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MCP server that exposes the BugHub common-bug knowledge base to AI coding and testing workflows.",
+  "type": "module",
+  "bin": {
+    "bughub-mcp": "server.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "3.25.76"
+  }
+}

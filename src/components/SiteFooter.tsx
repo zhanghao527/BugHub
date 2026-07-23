@@ -1,9 +1,15 @@
 export default function SiteFooter() {
  return (
- <footer className="border-t border-gray-200 bg-white">
- <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-1 px-5 py-5 text-xs text-gray-400 sm:flex-row">
- <span>bughub.vip · BUG 库</span>
- <span>收集与复盘每一个踩过的 bug · {new Date().getFullYear()}</span>
+ <footer className="site-footer">
+ <div className="site-footer-inner">
+ <div>
+ <strong>BugHub</strong>
+ <span>持续收集、分类和整理常见 Bug。</span>
+ </div>
+ <div className="footer-links">
+ <a href="/#catalog">Bug 分类</a>
+ <span>© {new Date().getFullYear()}</span>
+ </div>
  </div>
  </footer>
  );

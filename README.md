@@ -1,61 +1,110 @@
- # BugHub
- 
- 一个面向公众分享的个人 bug 知识库。把踩过的每一个线上缺陷记录成一篇 Markdown：现象、根因、复现步骤、当初该测什么、修复方案，按大类 / 小类归档。
- 
- 在线地址：https://bughub.vip
- 
- ## 架构
- 
- - 前端与服务端：Next.js 14（App Router）+ TypeScript + Tailwind CSS
- - 内容：全部存放在独立的 GitHub 仓库 bughub-content，目录即分类，一个 .md 文件就是一道 bug
- - 数据读取：运行时直接从 GitHub 解析内容（git trees API 列目录 + raw 读文件），用 gray-matter 解析 frontmatter
- - 缓存：Next ISR，每 5 分钟自动刷新一次；也可通过 /api/revalidate 即时刷新
- - 无数据库、无后台、无登录：新增内容就是往 bughub-content 仓库提交一个 Markdown 文件
- 
- ## 内容仓库
- 
- 内容仓库：https://github.com/zhanghao527/bughub-content
- 
- 目录结构：
- 
- ```
- content/<大类>/<小类>/<slug>.md
- ```
- 
- - 目录名用 NN- 前缀数字控制排序，展示时自动去掉前缀
- - 文件名（英文）作为详情页 URL 的 slug
- - frontmatter 字段：title / severity / stage / date / tags
- - 正文小节：## 现象 / ## 根因 / ## 复现步骤 / ## 当初该测什么 / ## 修复方案
- 
- 本仓库通过 git submodule 引用了内容仓库（bughub-content/），作为 GitHub 不可达时的本地兜底数据源。
- 
- ## 新增一道 bug
- 
- 推荐直接在 GitHub 上操作：
- 
- 1. 在 bughub-content 仓库对应目录下新增一个 .md 文件
- 2. 提交并 push
- 3. 最多 5 分钟站点自动刷新；或访问 /api/revalidate 立即刷新
- 
- ## 环境变量（均可选）
- 
- - BUGHUB_REPO：内容仓库，默认 zhanghao527/bughub-content
- - BUGHUB_BRANCH：分支，默认 main
- - BUGHUB_CONTENT_PATH：内容根目录，默认 content
- - GITHUB_TOKEN：给 GitHub API 提高限额（公开仓库可不填）
- - REVALIDATE_SECRET：设置后 /api/revalidate 需带 ?secret=xxx
- - BUGHUB_CONTENT_DIR：本地兜底内容目录的绝对路径
- 
- ## 本地开发
- 
- ```bash
- npm install
- npm run dev
- ```
- 
- 打开 http://localhost:3000
- 
- ## 部署
- 
- 见 DEPLOY.md（Node.js 18.17+，推荐 20+；PM2 + Nginx，无需数据库）。
- 
+# BugHub
+
+系统整理常见软件 Bug，用精炼案例记录「发生了什么、问题本质、下次要警惕什么」，方便开发、测试和质量团队按失效机制检索。
+
+网站：https://bughub.vip
+
+## 当前能力
+
+- 首页按一级、二级失效机制浏览，现有种子包含 18 个一级分类、72 个二级分类、144 条常见 Bug。
+- 每条 Bug 使用不可变 `BH-XXXX` 编号作为稳定 URL，正文以 Markdown 保存并由详情页渲染。
+- 内容主源是本地 SQLite，不依赖 GitHub 内容仓库或网络请求。
+- 提供 sitemap、robots、RSS `/feed.xml`、页面 metadata 和 TechArticle 结构化数据。
+- 支持 Markdown 导出、编辑后导入、按 ID 删除、统计和种子重置。
+- 提供独立域名的管理后台（账号密码登录），支持 Bug 内容的增删查改、草稿/发布切换与 Markdown 实时预览；主站匿名只读，后台需登录。
+
+## 技术栈
+
+- Next.js 14 App Router、TypeScript、React 18
+- Tailwind CSS 与自定义编辑式样式
+- SQLite、better-sqlite3
+- react-markdown、remark-gfm
+
+## 数据存储
+
+默认数据库位于：
+
+```text
+.data/bughub.sqlite
+```
+
+该文件、WAL 文件和导出目录均被 `.gitignore` 忽略。可通过环境变量把数据库放到其它持久化位置：
+
+```text
+BUGHUB_DATABASE_PATH=/absolute/path/to/bughub.sqlite
+```
+
+数据库中的 `body_markdown` 列保存完整 Markdown；分类、子分类和展示顺序均使用显式字段，不再依赖目录名排序。可复现的初始数据位于 `db/seeds/common-bugs.json`。
+
+## 本地开发
+
+```bash
+npm install
+npm run db:init
+npm run dev
+```
+
+`npm run dev` 和 `npm run build` 前都会自动执行 `db:init`。初始化只会在数据库为空时写入种子，不会覆盖已有本地编辑。访问 http://localhost:3000。
+
+## 内容编辑
+
+推荐流程是导出一篇 Markdown、编辑后再写回数据库：
+
+```bash
+# 查看数据量
+npm run db:stats
+
+# 导出全部内容到 .data/exports
+npm run db:export
+
+# 编辑导出的 Markdown 后，按 ID 新增或更新
+npm run db:import -- ".data/exports/状态与生命周期/状态流转/BH-1001-重复点击提交后状态跳过审核直接变成已完成.md"
+
+# 删除指定条目
+npm run db:delete -- BH-1001
+```
+
+如需把本地数据库完全恢复成仓库种子：
+
+```bash
+npm run db:reset
+```
+
+> `db:reset` 会删除数据库中的本地增删改，再完整导入种子；执行前请先备份或导出。
+
+字段规范、Markdown 模板、备份方式和数据库表结构见 [`db/README.md`](db/README.md)。
+
+## 环境变量
+
+复制 `.env.example` 为 `.env`：
+
+```text
+BUGHUB_DATABASE_PATH=可选的 SQLite 绝对路径
+REVALIDATE_SECRET=可选的手动页面刷新密钥
+```
+
+后台功能可在同一个 `.env` 中另行配置 `ADMIN_HOST`、`ADMIN_USERNAME`、`ADMIN_PASSWORD_HASH`、`ADMIN_SESSION_SECRET`、`PUBLIC_SITE_URL`，用于启用独立域名的管理后台；其中密码哈希用 `npm run admin:hash-password -- '强密码'` 生成，只把结果写入 `.env`。完整说明见 [`DEPLOY.md`](DEPLOY.md) 第 10 节。
+
+内容查询不使用长缓存，数据库写入后刷新页面即可看到变化。若部署层仍缓存页面，可调用：
+
+```bash
+curl -X POST https://bughub.vip/api/revalidate \
+  -H "Authorization: Bearer <REVALIDATE_SECRET>"
+```
+
+## 构建与检查
+
+```bash
+npm run db:stats
+npx tsc --noEmit
+npm run lint
+npm run build
+```
+
+## 内容边界与参考
+
+当前 144 条均为通用场景化重构案例，不声称来自某个具体公司、项目或线上事故，也不包含内部系统名、用户信息、密钥或可直接利用的漏洞步骤。分类覆盖以常见工程失效模式为主，并参考 [MITRE CWE](https://cwe.mitre.org/)、[NIST CWE 分类说明](https://nvd.nist.gov/vuln/categories) 和 [OWASP Top 10](https://owasp.org/www-project-top-ten/) 校准安全类范围。
+
+Content was rephrased for compliance with licensing restrictions.
+
+部署说明见 [`DEPLOY.md`](DEPLOY.md)。
